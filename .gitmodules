@@ -1,0 +1,6 @@
+[submodule "libsuperderpy"]
+	path = libsuperderpy
+	url = git@github.com:dos1/libsuperderpy.git
+[submodule "utils"]
+	path = utils
+	url = git@github.com:dos1/libsuperderpy-utils.git
