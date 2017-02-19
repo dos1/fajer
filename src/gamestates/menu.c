@@ -42,7 +42,7 @@ struct MenuResources {
 
 };
 
-int Gamestate_ProgressCount = 1; // number of loading steps as reported by Gamestate_Load
+int Gamestate_ProgressCount = 4; // number of loading steps as reported by Gamestate_Load
 
 void Gamestate_Logic(struct Game *game, struct MenuResources* data) {
 	// Called 60 times per second. Here you should do all your game logic.
@@ -73,7 +73,7 @@ void Gamestate_Draw(struct Game *game, struct MenuResources* data) {
 	al_clear_to_color(al_map_rgba(0,0,0,0));
 	al_draw_filled_rectangle(0, 158 + dy, 320, 180, al_map_rgba(0,0,0,64));
 
-	const char* texts[] = { "Play", "Options", "About", "Quit",
+	const char* texts[] = { "Start game", "Options", "About", "Quit",
 	                        "Fullscreen: on", "Music: on", "Sounds: on", "Voice: on", "Back",
 	                        "Fullscreen: off", "Music: off", "Sounds: off", "Voice: off", "Back",
 	                        "Design & art by Smalec", "Code & music by dos", "Warsaw Film School Game Jam 2", "Back"
@@ -346,17 +346,20 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	// Good place for allocating memory, loading bitmaps etc.
 	struct MenuResources *data = malloc(sizeof(struct MenuResources));
 	data->font = al_create_builtin_font();
-	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	data->button_sample = al_load_sample(GetDataFilePath(game, "button.flac"));
 	data->button = al_create_sample_instance(data->button_sample);
 	al_attach_sample_instance_to_mixer(data->button, game->audio.fx);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 	data->smoke = CreateCharacter(game, "logo");
 	RegisterSpritesheet(game, data->smoke, "smoke");
 	LoadSpritesheets(game, data->smoke);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 	data->logobg = al_load_bitmap(GetDataFilePath(game, "logobg.png"));
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	data->logo = al_load_bitmap(GetDataFilePath(game, "logo.png"));
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 	data->menu = al_create_bitmap(320, 180);
 

@@ -24,6 +24,11 @@
 #include <allegro5/allegro_color.h>
 #include <math.h>
 
+struct Mov {
+		float dx;
+		float dy;
+};
+
 struct GamestateResources {
 		// This struct is for every resource allocated and used by your gamestate.
 		// It gets created on load and then gets passed around to all other function calls.
@@ -44,7 +49,16 @@ struct GamestateResources {
 
 };
 
-int Gamestate_ProgressCount = 1; // number of loading steps as reported by Gamestate_Load
+float POINTS[3] = {0.4375, 0.5625, 0.71875};
+
+int Gamestate_ProgressCount = 6; // number of loading steps as reported by Gamestate_Load
+
+void SetTarget(struct Game *game, struct Character *character, int point, float ypos) {
+	float target = POINTS[point];
+	struct Mov *mov = character->data;
+	mov->dx = (character->x - target) / 60;
+//	mov->dy
+}
 
 void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	// Called 60 times per second. Here you should do all your game logic.
@@ -59,7 +73,11 @@ void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	}
 data->ticks++;
 
-MoveCharacter(game, data->human, 0, 0, -0.03);
+struct Mov *mov = data->human->data;
+mov->dy += 0.2;
+mov->dx += 0.01;
+
+MoveCharacter(game, data->human, mov->dx, mov->dy, -0.03);
 
 int move = 0;
 if (data->left) move--;
@@ -74,6 +92,17 @@ if (data->ticks % 6 == 0) {
 	data->fire = rand() / (float)INT_MAX * 0.142;
 }
 
+
+if (IsOnCharacter(game, data->tramp, data->human->x * game->viewport.width, (data->human->y + 0.1) * game->viewport.height)) {
+	mov->dy = -20;
+	mov->dx = -5;
+}
+
+if (IsOnCharacter(game, data->van, data->human->x * game->viewport.width, (data->human->y) * game->viewport.height)) {
+	SetCharacterPositionF(game, data->human, 0.8, 0.27, 0);
+	mov->dx = -8;
+	mov->dy = -10;
+}
 
 }
 
@@ -112,8 +141,9 @@ void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, 
 	// Called for each event in Allegro event queue.
 	// Here you can handle user input, expiring timers etc.
 	if ((ev->type==ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE)) {
-		UnloadCurrentGamestate(game); // mark this gamestate to be stopped and unloaded
+		//UnloadCurrentGamestate(game); // mark this gamestate to be stopped and unloaded
 		// When there are no active gamestates, the engine will quit.
+		SwitchCurrentGamestate(game, "menu");
 	}
 bool movement = data->left || data->right;
   if (ev->type == ALLEGRO_EVENT_KEY_DOWN) {
@@ -153,28 +183,39 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	RegisterSpritesheet(game, data->human, "man");
 	RegisterSpritesheet(game, data->human, "woman");
 	LoadSpritesheets(game, data->human);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 	data->building = CreateCharacter(game, "building");
 	RegisterSpritesheet(game, data->building, "fire");
 	LoadSpritesheets(game, data->building);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 
 	data->ego = CreateCharacter(game, "ego");
 	RegisterSpritesheet(game, data->ego, "walk");
 	RegisterSpritesheet(game, data->ego, "stand");
 	LoadSpritesheets(game, data->ego);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 	data->van = CreateCharacter(game, "van");
 	RegisterSpritesheet(game, data->van, "van");
 	LoadSpritesheets(game, data->van);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 
 	data->tramp = CreateCharacter(game, "tramp");
 	RegisterSpritesheet(game, data->tramp, "tramp");
 	LoadSpritesheets(game, data->tramp);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 	data->bg = al_load_bitmap(GetDataFilePath(game, "bg.png"));
 	data->clouds = al_load_bitmap(GetDataFilePath(game, "clouds.png"));
+
+
+	struct Mov *mov = malloc(sizeof(struct Mov));
+	mov->dx = -8;
+	mov->dy = -10;
+	data->human->data = mov;
 
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	return data;
