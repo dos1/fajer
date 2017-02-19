@@ -122,7 +122,7 @@ if (data->right) move++;
 	if (data->ego->x > 0.7) data->ego->x = 0.7;
 
 if (data->ticks % 6 == 0) {
-	data->fire = rand() / (float)INT_MAX * 0.142;
+	data->fire = rand() / (float)RAND_MAX * 0.142;
 }
 
 for (int i=0; i<HUMANS; i++) {
@@ -159,7 +159,7 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
  else if ((data->humans[i]->x <= 0.235) && (mov->type==0)) {
  if (!mov->dead) {
 	SetCharacterPositionF(game, data->humans[i], 0.8, 0.27, 0);
-	mov->dx = (rand() / (float)INT_MAX) * -12;
+	mov->dx = (rand() / (float)RAND_MAX) * -12;
 	mov->dy = -10;
 	al_stop_sample_instance(data->bdzium);
 	al_play_sample_instance(data->bdzium);
@@ -183,7 +183,7 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
 if (mov->dead) {
 	if (!data->humans[i]->successor) {
 		SetCharacterPositionF(game, data->humans[i], 0.8, 0.27, 0);
-		mov->dx = (rand() / (float)INT_MAX) * -12;
+		mov->dx = (rand() / (float)RAND_MAX) * -12;
 		mov->dy = -10;
 		mov->dead = false;
 		mov->type = rand() % 3;
