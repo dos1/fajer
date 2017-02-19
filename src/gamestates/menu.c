@@ -121,7 +121,7 @@ void MenuSelect(struct Game *game, struct MenuResources* data) {
 	switch (data->option) {
 		case 0:
 			//UnloadAllGamestates(game);
-			SwitchCurrentGamestate(game, "empty");
+			SwitchCurrentGamestate(game, "game");
 //			StartGame(game, !game->data->logo);
 			break;
 		case 1:

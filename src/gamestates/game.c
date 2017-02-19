@@ -98,6 +98,11 @@ void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	}
 data->ticks++;
 
+if (data->progress > 60*60) {
+	SwitchCurrentGamestate(game, "lose");
+}
+
+
 for (int i=0; i<HUMANS; i++) {
 
 struct Mov *mov = data->humans[i]->data;
@@ -157,6 +162,9 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
 	al_play_sample_instance(data->bdzium);
 	mov->type = rand() % 3;
 	data->score++;
+	if (data->score > 10) {
+		SwitchCurrentGamestate(game, "exit");
+	}
 	SelectSpritesheet(game, data->humans[i], TYPES[mov->type]);
  }
 } else {
@@ -191,9 +199,9 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 
 
 //	PrintConsole(game, "%f %f", );
-	al_draw_bitmap(data->clouds, (data->cloudpos+1) * game->viewport.width, 0, 0);
-	al_draw_bitmap(data->clouds, data->cloudpos * game->viewport.width, 0, 0);
-	al_draw_bitmap(data->clouds, (data->cloudpos-1) * game->viewport.width, 0, 0);
+	al_draw_scaled_bitmap(data->clouds, 0, 0, al_get_bitmap_width(data->clouds), al_get_bitmap_height(data->clouds), (data->cloudpos+1) * game->viewport.width, 0,game->viewport.width, game->viewport.height, 0);
+	al_draw_scaled_bitmap(data->clouds, 0, 0, al_get_bitmap_width(data->clouds), al_get_bitmap_height(data->clouds),data->cloudpos * game->viewport.width, 0, game->viewport.width, game->viewport.height,0);
+	al_draw_scaled_bitmap(data->clouds, 0, 0, al_get_bitmap_width(data->clouds), al_get_bitmap_height(data->clouds), (data->cloudpos-1) * game->viewport.width, 0, game->viewport.width, game->viewport.height,0);
 
 	al_draw_scaled_bitmap(data->bg, 0, 0, al_get_bitmap_width(data->bg), al_get_bitmap_height(data->bg), 0, 0, game->viewport.width, game->viewport.height, 0);
 
@@ -295,8 +303,6 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	al_set_sample_instance_gain(data->music, 0.85);
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
-
-
 	data->bdziumsample = al_load_sample(GetDataFilePath(game, "bdzium.flac"));
 	data->bdzium = al_create_sample_instance(data->bdziumsample);
 	al_attach_sample_instance_to_mixer(data->bdzium, game->audio.fx);
@@ -305,7 +311,7 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	data->boomsample = al_load_sample(GetDataFilePath(game, "boom.flac"));
 	data->boom = al_create_sample_instance(data->boomsample);
 	al_attach_sample_instance_to_mixer(data->boom, game->audio.fx);
-	al_set_sample_instance_gain(data->boom, 1.333);
+	al_set_sample_instance_gain(data->boom, 1.5);
 
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
