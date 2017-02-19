@@ -36,9 +36,6 @@ struct GamestateResources {
 
 		ALLEGRO_BITMAP *bg;
 
-		ALLEGRO_BITMAP *logobg, *logo;
-		struct Character *smoke;
-
 		unsigned long long ticks;
 
 		float fire;
@@ -53,7 +50,6 @@ void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	// Called 60 times per second. Here you should do all your game logic.
 	AnimateCharacter(game, data->human, 1);
 	AnimateCharacter(game, data->building, 1);
-	AnimateCharacter(game, data->smoke, 1);
 	AnimateCharacter(game, data->ego, 1);
 	AnimateCharacter(game, data->tramp, 1);
 	AnimateCharacter(game, data->van, 1);
@@ -62,6 +58,8 @@ void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 		data->cloudpos = 1;
 	}
 data->ticks++;
+
+MoveCharacter(game, data->human, 0, 0, -0.03);
 
 int move = 0;
 if (data->left) move--;
@@ -77,10 +75,6 @@ if (data->ticks % 6 == 0) {
 }
 
 
-}
-
-void DrawCharacterHelper(struct Game *game, struct Character *character, float scalex, float scaley, int flags) {
-	DrawScaledCharacter(game, character, al_map_rgb(255,255,255), scalex * game->viewport.width / 3200.0, scaley * game->viewport.height / 1800.0, flags);
 }
 
 void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
@@ -102,10 +96,8 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 
 	DrawCharacterHelper(game, data->building, 1, 1, 0);
 
-	SetCharacterPositionF(game, data->human, 0.8, 0.27, 0);
 	DrawCharacterHelper(game, data->human, 1, 1, 0);
 
-	SetCharacterPositionF(game, data->smoke, 0.01, sin(data->ticks/ALLEGRO_PI/4)*0.02 - 0.02, 0);
 
 	SetCharacterPosition(game, data->tramp, GetCharacterX(game, data->ego) + 0.0666 * game->viewport.width,  0.725 * game->viewport.height, 0);
 
@@ -113,11 +105,6 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 
 	DrawCharacterHelper(game, data->ego, 0.5, 0.5, 0);
 	DrawCharacterHelper(game, data->tramp, 0.3573, 0.3573, 0);
-
-
-//	al_draw_scaled_bitmap(data->logobg, 0, 0, al_get_bitmap_width(data->logobg), al_get_bitmap_height(data->logobg), 0, 0, game->viewport.width, game->viewport.height, 0);
-//	al_draw_scaled_bitmap(data->logo, 0, 0, al_get_bitmap_width(data->logo), al_get_bitmap_height(data->logo), 0, (sin(data->ticks/ALLEGRO_PI/4)*0.02 - 0.02)* game->viewport.height, game->viewport.width, game->viewport.height, 0);
-//	DrawCharacterHelper(game, data->smoke, 1, 1, 0);
 
 }
 
@@ -149,8 +136,10 @@ bool movement = data->left || data->right;
 			data->right = false;
 		}
 	}
-	if (!(data->left || data->right))
-		SelectSpritesheet(game, data->ego, "stand");
+	if (!(data->left || data->right)) {
+		if (movement)
+			SelectSpritesheet(game, data->ego, "stand");
+	}
 }
 
 void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
@@ -175,11 +164,6 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	RegisterSpritesheet(game, data->ego, "stand");
 	LoadSpritesheets(game, data->ego);
 
-
-	data->smoke = CreateCharacter(game, "logo");
-	RegisterSpritesheet(game, data->smoke, "smoke");
-	LoadSpritesheets(game, data->smoke);
-
 	data->van = CreateCharacter(game, "van");
 	RegisterSpritesheet(game, data->van, "van");
 	LoadSpritesheets(game, data->van);
@@ -191,8 +175,6 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 
 	data->bg = al_load_bitmap(GetDataFilePath(game, "bg.png"));
 	data->clouds = al_load_bitmap(GetDataFilePath(game, "clouds.png"));
-	data->logobg = al_load_bitmap(GetDataFilePath(game, "logobg.png"));
-	data->logo = al_load_bitmap(GetDataFilePath(game, "logo.png"));
 
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	return data;
@@ -218,12 +200,10 @@ void Gamestate_Start(struct Game *game, struct GamestateResources* data) {
 	data->right = false;
 	SetCharacterPositionF(game, data->ego, 0.2875, 0.666, 0);
 	SelectSpritesheet(game, data->ego, "stand");
-	SelectSpritesheet(game, data->human, "kid");
-	SetCharacterPosition(game, data->human, 0, 0, 0);
+	SelectSpritesheet(game, data->human, "man");
+	SetCharacterPositionF(game, data->human, 0.8, 0.27, 0);
 	SelectSpritesheet(game, data->building, "fire");
-	SelectSpritesheet(game, data->smoke, "smoke");
 	SetCharacterPositionF(game, data->building, 0.76, 0.1, 0);
-	SetCharacterPositionF(game, data->smoke, 0.01, 0, 0);
 	SelectSpritesheet(game, data->tramp, "tramp");
 	SelectSpritesheet(game, data->van, "van");
 	SetCharacterPositionF(game, data->van, 0, 0.6, 0);

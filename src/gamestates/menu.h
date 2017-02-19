@@ -1,5 +1,5 @@
-/*! \file common.c
- *  \brief Common stuff that can be used by all gamestates.
+/*! \file fall.h
+ *  \brief Walking gamestate.
  */
 /*
  * Copyright (c) Sebastian Krzyszkowiak <dos@dosowisko.net>
@@ -18,21 +18,4 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
-#include "common.h"
-#include <libsuperderpy.h>
-
-struct CommonResources* CreateGameData(struct Game *game) {
-	struct CommonResources *data = calloc(1, sizeof(struct CommonResources));
-	return data;
-}
-
-void DrawCharacterHelper(struct Game *game, struct Character *character, float scalex, float scaley, int flags) {
-	DrawScaledCharacter(game, character, al_map_rgb(255,255,255), scalex * game->viewport.width / 3200.0, scaley * game->viewport.height / 1800.0, flags);
-}
-
-
-void DestroyGameData(struct Game *game, struct CommonResources *data) {
-	free(data);
-}
 
