@@ -64,6 +64,8 @@ struct GamestateResources {
 
 		bool left, right;
 
+		int score, progress;
+
 };
 
 float POINTS[3] = {0.4375, 0.5625, 0.71875};
@@ -87,6 +89,9 @@ void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	AnimateCharacter(game, data->ego, 1);
 	AnimateCharacter(game, data->tramp, 1);
 	AnimateCharacter(game, data->van, 1);
+
+	data->progress++;
+
 	data->cloudpos -= 0.02;
 	if (data->cloudpos < -1) {
 		data->cloudpos = 1;
@@ -151,6 +156,7 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
 	mov->dy = -10;
 	al_play_sample_instance(data->bdzium);
 	mov->type = rand() % 3;
+	data->score++;
 	SelectSpritesheet(game, data->humans[i], TYPES[mov->type]);
  }
 } else {
@@ -209,6 +215,18 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 	}
 	DrawCharacterHelper(game, data->van, 1, 1, 0);
 
+
+	al_draw_filled_rounded_rectangle(game->viewport.width * 0.2, game->viewport.height * 0.01, game->viewport.width * 0.8, game->viewport.height * 0.07, game->viewport.width / 320, game->viewport.height / 180, al_map_rgb(0,0,0));
+	al_draw_filled_rectangle(game->viewport.width * 0.21, game->viewport.height * 0.02,
+	                         game->viewport.width * 0.21 + (game->viewport.width * 0.58) * (data->progress / (60.0*60.0)),
+	                         game->viewport.height * 0.06, al_map_rgb(255,0,0));
+
+
+	char buf[255];
+	snprintf(buf, 255, "%d", data->score);
+
+	DrawTextWithShadow(data->font, al_map_rgb(255, 255, 255), game->viewport.width * 0.141, game->viewport.height * 0.716, ALLEGRO_ALIGN_CENTER,
+	                   buf);
 }
 
 void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, ALLEGRO_EVENT *ev) {
@@ -250,7 +268,8 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	// Called once, when the gamestate library is being loaded.
 	// Good place for allocating memory, loading bitmaps etc.
 	struct GamestateResources *data = malloc(sizeof(struct GamestateResources));
-	data->font = al_create_builtin_font();
+	data->font = al_load_ttf_font(GetDataFilePath(game, "fonts/DejaVuSansMono.ttf"),
+	                              game->viewport.height*0.05 ,0 );
 
 	for (int i=0; i<HUMANS; i++) {
 
@@ -342,6 +361,8 @@ void Gamestate_Unload(struct Game *game, struct GamestateResources* data) {
 void Gamestate_Start(struct Game *game, struct GamestateResources* data) {
 	// Called when this gamestate gets control. Good place for initializing state,
 	// playing music etc.
+	data->score=0;
+	data->progress = 0;
 	data->cloudpos = 1;
 	data->ticks = 0;
 	data->fire = 0;
