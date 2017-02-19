@@ -106,7 +106,7 @@ if (data->progress > 60*60) {
 for (int i=0; i<HUMANS; i++) {
 
 struct Mov *mov = data->humans[i]->data;
-mov->dy += 0.25;
+mov->dy += 0.3;
 mov->dx += 0.01;
 
 MoveCharacter(game, data->humans[i], mov->dx, mov->dy, -0.03);
@@ -147,7 +147,7 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
 	mov->dy = -20;
 	if (mov->type==0) {
 //		mov->dx = -7;
-		mov->dx = (data->humans[i]->x - 0.23)* -24;
+		mov->dx = (data->humans[i]->x - 0.23)* -28;
 
 	} else {
 		mov->dx = -20;
