@@ -109,7 +109,7 @@ struct Mov *mov = data->humans[i]->data;
 mov->dy += 0.3;
 mov->dx += 0.01;
 
-MoveCharacter(game, data->humans[i], mov->dx, mov->dy, -0.03);
+MoveCharacter(game, data->humans[i], mov->dx / 3200.0 * game->viewport.width, mov->dy / 1800.0 * game->viewport.height, -0.03);
 }
 
 int move = 0;
