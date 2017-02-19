@@ -24,6 +24,8 @@
 #include <allegro5/allegro_color.h>
 #include <math.h>
 
+#define HUMANS 3
+
 struct Mov {
 		float dx;
 		float dy;
@@ -38,7 +40,8 @@ struct GamestateResources {
 		float cloudpos;
 		ALLEGRO_BITMAP *clouds;
 
-		struct Character *human, *ego;
+		struct Character *ego;
+		struct Character *humans[HUMANS];
 		struct Character *building, *tramp, *van;
 
 		ALLEGRO_BITMAP *bg;
@@ -77,7 +80,9 @@ void SetTarget(struct Game *game, struct Character *character, int point, float 
 
 void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	// Called 60 times per second. Here you should do all your game logic.
-	AnimateCharacter(game, data->human, 1);
+	for (int i=0; i<HUMANS; i++) {
+	AnimateCharacter(game, data->humans[i], 1);
+	}
 	AnimateCharacter(game, data->building, 1);
 	AnimateCharacter(game, data->ego, 1);
 	AnimateCharacter(game, data->tramp, 1);
@@ -88,11 +93,14 @@ void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	}
 data->ticks++;
 
-struct Mov *mov = data->human->data;
+for (int i=0; i<HUMANS; i++) {
+
+struct Mov *mov = data->humans[i]->data;
 mov->dy += 0.25;
 mov->dx += 0.01;
 
-MoveCharacter(game, data->human, mov->dx, mov->dy, -0.03);
+MoveCharacter(game, data->humans[i], mov->dx, mov->dy, -0.03);
+}
 
 int move = 0;
 if (data->left) move--;
@@ -107,24 +115,28 @@ if (data->ticks % 6 == 0) {
 	data->fire = rand() / (float)INT_MAX * 0.142;
 }
 
-if (data->human->x < -0.3) {
+for (int i=0; i<HUMANS; i++) {
+	struct Mov *mov = data->humans[i]->data;
+
+
+if (data->humans[i]->x < -0.3) {
 	if (!mov->dead) {
-		SelectSpritesheet(game, data->human, "boom");
+		SelectSpritesheet(game, data->humans[i], "boom");
 		mov->dy = 0;
 		al_play_sample_instance(data->boom);
 		mov->dead = true;
 	}
 }
 
-if ((data->human->y < 0.725) && (data->human->y > 0.675))  {
+if ((data->humans[i]->y < 0.725) && (data->humans[i]->y > 0.675))  {
 
-if ((data->human->x + 0.2 < data->tramp->x + 0.3) && (data->human->x - 0.2 > data->tramp->x - 0.25)) {
+if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0.2 > data->tramp->x - 0.25)) {
 //if (IsOnCharacter(game, data->tramp, data->human->x * game->viewport.width, (data->human->y + 0.1) * game->viewport.height)) {
  if(!mov->dead) {
 	mov->dy = -20;
 	if (mov->type==0) {
 //		mov->dx = -7;
-		mov->dx = (data->human->x - 0.23)* -24;
+		mov->dx = (data->humans[i]->x - 0.23)* -24;
 
 	} else {
 		mov->dx = -20;
@@ -132,18 +144,18 @@ if ((data->human->x + 0.2 < data->tramp->x + 0.3) && (data->human->x - 0.2 > dat
 	al_play_sample_instance(data->boing);
  }
 }
- else if (IsOnCharacter(game, data->van, data->human->x * game->viewport.width, (data->human->y) * game->viewport.height)) {
+ else if (IsOnCharacter(game, data->van, data->humans[i]->x * game->viewport.width, (data->humans[i]->y) * game->viewport.height)) {
  if (!mov->dead) {
-	SetCharacterPositionF(game, data->human, 0.8, 0.27, 0);
+	SetCharacterPositionF(game, data->humans[i], 0.8, 0.27, 0);
 	mov->dx = (rand() / (float)INT_MAX) * -12;
 	mov->dy = -10;
 	al_play_sample_instance(data->bdzium);
 	mov->type = rand() % 3;
-	SelectSpritesheet(game, data->human, TYPES[mov->type]);
+	SelectSpritesheet(game, data->humans[i], TYPES[mov->type]);
  }
 } else {
 	if (!mov->dead) {
-		SelectSpritesheet(game, data->human, "boom");
+		SelectSpritesheet(game, data->humans[i], "boom");
 		mov->dy = 0;
 		al_play_sample_instance(data->boom);
 		mov->dead = true;
@@ -152,16 +164,18 @@ if ((data->human->x + 0.2 < data->tramp->x + 0.3) && (data->human->x - 0.2 > dat
 }
 
 if (mov->dead) {
-	if (!data->human->successor) {
-		SetCharacterPositionF(game, data->human, 0.8, 0.27, 0);
+	if (!data->humans[i]->successor) {
+		SetCharacterPositionF(game, data->humans[i], 0.8, 0.27, 0);
 		mov->dx = (rand() / (float)INT_MAX) * -12;
 		mov->dy = -10;
 		mov->dead = false;
 		mov->type = rand() % 3;
-		SelectSpritesheet(game, data->human, TYPES[mov->type]);
+		SelectSpritesheet(game, data->humans[i], TYPES[mov->type]);
 	}
 }
 
+
+}
 }
 
 void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
@@ -190,7 +204,9 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 
 	DrawCharacterHelper(game, data->ego, 0.5, 0.5, 0);
 	DrawCharacterHelper(game, data->tramp, 0.3573, 0.3573, 0);
-	DrawCharacterHelper(game, data->human, 1, 1, 0);
+	for (int i=0; i<HUMANS; i++) {
+	DrawCharacterHelper(game, data->humans[i], 1, 1, 0);
+	}
 	DrawCharacterHelper(game, data->van, 1, 1, 0);
 
 }
@@ -236,13 +252,16 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	struct GamestateResources *data = malloc(sizeof(struct GamestateResources));
 	data->font = al_create_builtin_font();
 
-	data->human = CreateCharacter(game, "human");
-	RegisterSpritesheet(game, data->human, "kid");
-	RegisterSpritesheet(game, data->human, "man");
-	RegisterSpritesheet(game, data->human, "woman");
-	RegisterSpritesheet(game, data->human, "boom");
-	RegisterSpritesheet(game, data->human, "blank");
-	LoadSpritesheets(game, data->human);
+	for (int i=0; i<HUMANS; i++) {
+
+	data->humans[i] = CreateCharacter(game, "human");
+	RegisterSpritesheet(game, data->humans[i], "kid");
+	RegisterSpritesheet(game, data->humans[i], "man");
+	RegisterSpritesheet(game, data->humans[i], "woman");
+	RegisterSpritesheet(game, data->humans[i], "boom");
+	RegisterSpritesheet(game, data->humans[i], "blank");
+	LoadSpritesheets(game, data->humans[i]);
+	}
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 	data->building = CreateCharacter(game, "building");
@@ -298,13 +317,14 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	data->clouds = al_load_bitmap(GetDataFilePath(game, "clouds.png"));
 
 
+	for (int i=0; i<HUMANS; i++) {
 	struct Mov *mov = malloc(sizeof(struct Mov));
-	mov->dx = -8;
-	mov->dy = -10;
+	mov->dx = -4 * i;
+	mov->dy = -5 * i;
 	mov->dead = false;
 	mov->type = 0;
-	data->human->data = mov;
-
+	data->humans[i]->data = mov;
+}
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	return data;
 }
@@ -315,7 +335,7 @@ void Gamestate_Unload(struct Game *game, struct GamestateResources* data) {
 	al_destroy_font(data->font);
 	al_destroy_bitmap(data->bg);
 	DestroyCharacter(game, data->building);
-	DestroyCharacter(game, data->human);
+//	DestroyCharacter(game, data->human);
 	free(data);
 }
 
@@ -329,9 +349,11 @@ void Gamestate_Start(struct Game *game, struct GamestateResources* data) {
 	data->right = false;
 	SetCharacterPositionF(game, data->ego, 0.2875, 0.666, 0);
 	SelectSpritesheet(game, data->ego, "stand");
-	SelectSpritesheet(game, data->human, "kid");
-	SetCharacterPositionF(game, data->human, 0.8, 0.27, 0);
-	SelectSpritesheet(game, data->building, "fire");
+for (int i=0; i<HUMANS; i++) {
+	SelectSpritesheet(game, data->humans[i], "kid");
+	SetCharacterPositionF(game, data->humans[i], 0.8, 0.27, 0);
+}
+  SelectSpritesheet(game, data->building, "fire");
 	SetCharacterPositionF(game, data->building, 0.76, 0.1, 0);
 	SelectSpritesheet(game, data->tramp, "tramp");
 	SelectSpritesheet(game, data->van, "van");
