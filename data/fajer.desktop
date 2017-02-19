@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Fajer
+Exec=fajer
+Comment=Save the children
+Icon=fajer
+Terminal=false
+Categories=Game;ArcadeGame;
