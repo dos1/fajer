@@ -39,7 +39,7 @@ struct GamestateResources {
 
 int Gamestate_ProgressCount = 5;
 
-static const char* text = "# dosowisko.net";
+static const char* text = "# Smaldos Productions";
 
 //==================================Timeline manager actions BEGIN
 bool FadeIn(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
@@ -199,7 +199,7 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	(*progress)(game);
 
 	data->font = al_load_ttf_font(GetDataFilePath(game, "fonts/DejaVuSansMono.ttf"),
-	                              (int)(game->viewport.height*0.1666 / 8) * 8 ,0 );
+	                              (int)(game->viewport.height*0.12 / 8) * 8 ,0 );
 	(*progress)(game);
 	data->sample = al_load_sample( GetDataFilePath(game, "dosowisko.flac") );
 	data->sound = al_create_sample_instance(data->sample);

@@ -21,31 +21,104 @@
 
 #include "../common.h"
 #include <libsuperderpy.h>
+#include <allegro5/allegro_color.h>
+#include <math.h>
 
 struct GamestateResources {
 		// This struct is for every resource allocated and used by your gamestate.
 		// It gets created on load and then gets passed around to all other function calls.
 		ALLEGRO_FONT *font;
-		int blink_counter;
+		float cloudpos;
+		ALLEGRO_BITMAP *clouds;
+
+		struct Character *human, *ego;
+		struct Character *building, *tramp, *van;
+
+		ALLEGRO_BITMAP *bg;
+
+		ALLEGRO_BITMAP *logobg, *logo;
+		struct Character *smoke;
+
+		unsigned long long ticks;
+
+		float fire;
+
+		bool left, right;
+
 };
 
 int Gamestate_ProgressCount = 1; // number of loading steps as reported by Gamestate_Load
 
 void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	// Called 60 times per second. Here you should do all your game logic.
-	data->blink_counter++;
-	if (data->blink_counter >= 60) {
-		data->blink_counter = 0;
+	AnimateCharacter(game, data->human, 1);
+	AnimateCharacter(game, data->building, 1);
+	AnimateCharacter(game, data->smoke, 1);
+	AnimateCharacter(game, data->ego, 1);
+	AnimateCharacter(game, data->tramp, 1);
+	AnimateCharacter(game, data->van, 1);
+	data->cloudpos -= 0.02;
+	if (data->cloudpos < -1) {
+		data->cloudpos = 1;
 	}
+data->ticks++;
+
+int move = 0;
+if (data->left) move--;
+if (data->right) move++;
+
+  MoveCharacterF(game, data->ego, move * 0.005, 0, 0);
+
+	if (data->ego->x < 0.28) data->ego->x = 0.28;
+	if (data->ego->x > 0.7) data->ego->x = 0.7;
+
+if (data->ticks % 6 == 0) {
+	data->fire = rand() / (float)INT_MAX * 0.142;
+}
+
+
+}
+
+void DrawCharacterHelper(struct Game *game, struct Character *character, float scalex, float scaley, int flags) {
+	DrawScaledCharacter(game, character, al_map_rgb(255,255,255), scalex * game->viewport.width / 3200.0, scaley * game->viewport.height / 1800.0, flags);
 }
 
 void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 	// Called as soon as possible, but no sooner than next Gamestate_Logic call.
 	// Draw everything to the screen here.
-	if (data->blink_counter < 50) {
-		al_draw_text(data->font, al_map_rgb(255,255,255), game->viewport.width / 2, game->viewport.height / 2,
-		             ALLEGRO_ALIGN_CENTRE, "Nothing to see here, move along!");
-	}
+	al_clear_to_color(al_map_rgb(30,198,228));
+
+
+//	PrintConsole(game, "%f %f", );
+	al_draw_bitmap(data->clouds, (data->cloudpos+1) * game->viewport.width, 0, 0);
+	al_draw_bitmap(data->clouds, data->cloudpos * game->viewport.width, 0, 0);
+	al_draw_bitmap(data->clouds, (data->cloudpos-1) * game->viewport.width, 0, 0);
+
+	al_draw_scaled_bitmap(data->bg, 0, 0, al_get_bitmap_width(data->bg), al_get_bitmap_height(data->bg), 0, 0, game->viewport.width, game->viewport.height, 0);
+
+
+	al_draw_filled_rectangle(game->viewport.width * 0.8, game->viewport.height * 0.2, game->viewport.width, game->viewport.height * 0.9,
+	                         al_color_hsv(0, 1, 0.5 - data->fire));
+
+	DrawCharacterHelper(game, data->building, 1, 1, 0);
+
+	SetCharacterPositionF(game, data->human, 0.8, 0.27, 0);
+	DrawCharacterHelper(game, data->human, 1, 1, 0);
+
+	SetCharacterPositionF(game, data->smoke, 0.01, sin(data->ticks/ALLEGRO_PI/4)*0.02 - 0.02, 0);
+
+	SetCharacterPosition(game, data->tramp, GetCharacterX(game, data->ego) + 0.0666 * game->viewport.width,  0.725 * game->viewport.height, 0);
+
+	DrawCharacterHelper(game, data->van, 1, 1, 0);
+
+	DrawCharacterHelper(game, data->ego, 0.5, 0.5, 0);
+	DrawCharacterHelper(game, data->tramp, 0.3573, 0.3573, 0);
+
+
+//	al_draw_scaled_bitmap(data->logobg, 0, 0, al_get_bitmap_width(data->logobg), al_get_bitmap_height(data->logobg), 0, 0, game->viewport.width, game->viewport.height, 0);
+//	al_draw_scaled_bitmap(data->logo, 0, 0, al_get_bitmap_width(data->logo), al_get_bitmap_height(data->logo), 0, (sin(data->ticks/ALLEGRO_PI/4)*0.02 - 0.02)* game->viewport.height, game->viewport.width, game->viewport.height, 0);
+//	DrawCharacterHelper(game, data->smoke, 1, 1, 0);
+
 }
 
 void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, ALLEGRO_EVENT *ev) {
@@ -55,6 +128,29 @@ void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, 
 		UnloadCurrentGamestate(game); // mark this gamestate to be stopped and unloaded
 		// When there are no active gamestates, the engine will quit.
 	}
+bool movement = data->left || data->right;
+  if (ev->type == ALLEGRO_EVENT_KEY_DOWN) {
+		if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT) {
+			data->left = true;
+			if (!movement)
+				SelectSpritesheet(game, data->ego, "walk");
+		}
+		if (ev->keyboard.keycode == ALLEGRO_KEY_RIGHT) {
+			data->right = true;
+			if (!movement)
+				SelectSpritesheet(game, data->ego, "walk");
+		}
+	}
+	if (ev->type == ALLEGRO_EVENT_KEY_UP) {
+		if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT) {
+			data->left = false;
+		}
+		if (ev->keyboard.keycode == ALLEGRO_KEY_RIGHT) {
+			data->right = false;
+		}
+	}
+	if (!(data->left || data->right))
+		SelectSpritesheet(game, data->ego, "stand");
 }
 
 void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
@@ -62,6 +158,42 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	// Good place for allocating memory, loading bitmaps etc.
 	struct GamestateResources *data = malloc(sizeof(struct GamestateResources));
 	data->font = al_create_builtin_font();
+
+	data->human = CreateCharacter(game, "human");
+	RegisterSpritesheet(game, data->human, "kid");
+	RegisterSpritesheet(game, data->human, "man");
+	RegisterSpritesheet(game, data->human, "woman");
+	LoadSpritesheets(game, data->human);
+
+	data->building = CreateCharacter(game, "building");
+	RegisterSpritesheet(game, data->building, "fire");
+	LoadSpritesheets(game, data->building);
+
+
+	data->ego = CreateCharacter(game, "ego");
+	RegisterSpritesheet(game, data->ego, "walk");
+	RegisterSpritesheet(game, data->ego, "stand");
+	LoadSpritesheets(game, data->ego);
+
+
+	data->smoke = CreateCharacter(game, "logo");
+	RegisterSpritesheet(game, data->smoke, "smoke");
+	LoadSpritesheets(game, data->smoke);
+
+	data->van = CreateCharacter(game, "van");
+	RegisterSpritesheet(game, data->van, "van");
+	LoadSpritesheets(game, data->van);
+
+
+	data->tramp = CreateCharacter(game, "tramp");
+	RegisterSpritesheet(game, data->tramp, "tramp");
+	LoadSpritesheets(game, data->tramp);
+
+	data->bg = al_load_bitmap(GetDataFilePath(game, "bg.png"));
+	data->clouds = al_load_bitmap(GetDataFilePath(game, "clouds.png"));
+	data->logobg = al_load_bitmap(GetDataFilePath(game, "logobg.png"));
+	data->logo = al_load_bitmap(GetDataFilePath(game, "logo.png"));
+
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	return data;
 }
@@ -70,13 +202,31 @@ void Gamestate_Unload(struct Game *game, struct GamestateResources* data) {
 	// Called when the gamestate library is being unloaded.
 	// Good place for freeing all allocated memory and resources.
 	al_destroy_font(data->font);
+	al_destroy_bitmap(data->bg);
+	DestroyCharacter(game, data->building);
+	DestroyCharacter(game, data->human);
 	free(data);
 }
 
 void Gamestate_Start(struct Game *game, struct GamestateResources* data) {
 	// Called when this gamestate gets control. Good place for initializing state,
 	// playing music etc.
-	data->blink_counter = 0;
+	data->cloudpos = 1;
+	data->ticks = 0;
+	data->fire = 0;
+	data->left = false;
+	data->right = false;
+	SetCharacterPositionF(game, data->ego, 0.2875, 0.666, 0);
+	SelectSpritesheet(game, data->ego, "stand");
+	SelectSpritesheet(game, data->human, "kid");
+	SetCharacterPosition(game, data->human, 0, 0, 0);
+	SelectSpritesheet(game, data->building, "fire");
+	SelectSpritesheet(game, data->smoke, "smoke");
+	SetCharacterPositionF(game, data->building, 0.76, 0.1, 0);
+	SetCharacterPositionF(game, data->smoke, 0.01, 0, 0);
+	SelectSpritesheet(game, data->tramp, "tramp");
+	SelectSpritesheet(game, data->van, "van");
+	SetCharacterPositionF(game, data->van, 0, 0.6, 0);
 }
 
 void Gamestate_Stop(struct Game *game, struct GamestateResources* data) {
