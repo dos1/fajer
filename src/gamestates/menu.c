@@ -40,9 +40,12 @@ struct MenuResources {
 
 		ALLEGRO_BITMAP *menu;
 
+		ALLEGRO_SAMPLE_INSTANCE *music;
+		ALLEGRO_SAMPLE *sample;
+
 };
 
-int Gamestate_ProgressCount = 4; // number of loading steps as reported by Gamestate_Load
+int Gamestate_ProgressCount = 5; // number of loading steps as reported by Gamestate_Load
 
 void Gamestate_Logic(struct Game *game, struct MenuResources* data) {
 	// Called 60 times per second. Here you should do all your game logic.
@@ -351,6 +354,14 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	al_attach_sample_instance_to_mixer(data->button, game->audio.fx);
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
+
+	data->sample = al_load_sample(GetDataFilePath(game, "menu.flac"));
+	data->music = al_create_sample_instance(data->sample);
+	al_attach_sample_instance_to_mixer(data->music, game->audio.music);
+	al_set_sample_instance_playmode(data->music, ALLEGRO_PLAYMODE_LOOP);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
+
+
 	data->smoke = CreateCharacter(game, "logo");
 	RegisterSpritesheet(game, data->smoke, "smoke");
 	LoadSpritesheets(game, data->smoke);
@@ -382,12 +393,15 @@ void Gamestate_Start(struct Game *game, struct MenuResources* data) {
 	data->ticks = 0;
 	SelectSpritesheet(game, data->smoke, "smoke");
 
+	al_play_sample_instance(data->music);
+
 	SetCharacterPositionF(game, data->smoke, 0.01, 0, 0);
 
 }
 
 void Gamestate_Stop(struct Game *game, struct MenuResources* data) {
 	// Called when gamestate gets stopped. Stop timers, music etc. here.
+	al_stop_sample_instance(data->music);
 }
 
 // Ignore those for now.

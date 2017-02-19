@@ -27,6 +27,8 @@
 struct Mov {
 		float dx;
 		float dy;
+		bool dead;
+		int type;
 };
 
 struct GamestateResources {
@@ -41,6 +43,18 @@ struct GamestateResources {
 
 		ALLEGRO_BITMAP *bg;
 
+		ALLEGRO_SAMPLE *sample;
+		ALLEGRO_SAMPLE_INSTANCE *music;
+
+
+		ALLEGRO_SAMPLE *boomsample;
+		ALLEGRO_SAMPLE_INSTANCE *boom;
+		ALLEGRO_SAMPLE *bdziumsample;
+		ALLEGRO_SAMPLE_INSTANCE *bdzium;
+		ALLEGRO_SAMPLE *boingsample;
+		ALLEGRO_SAMPLE_INSTANCE *boing;
+
+
 		unsigned long long ticks;
 
 		float fire;
@@ -50,8 +64,9 @@ struct GamestateResources {
 };
 
 float POINTS[3] = {0.4375, 0.5625, 0.71875};
+char* TYPES[3] = {"kid", "woman", "man"};
 
-int Gamestate_ProgressCount = 6; // number of loading steps as reported by Gamestate_Load
+int Gamestate_ProgressCount = 9; // number of loading steps as reported by Gamestate_Load
 
 void SetTarget(struct Game *game, struct Character *character, int point, float ypos) {
 	float target = POINTS[point];
@@ -74,7 +89,7 @@ void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 data->ticks++;
 
 struct Mov *mov = data->human->data;
-mov->dy += 0.2;
+mov->dy += 0.25;
 mov->dx += 0.01;
 
 MoveCharacter(game, data->human, mov->dx, mov->dy, -0.03);
@@ -92,16 +107,59 @@ if (data->ticks % 6 == 0) {
 	data->fire = rand() / (float)INT_MAX * 0.142;
 }
 
-
-if (IsOnCharacter(game, data->tramp, data->human->x * game->viewport.width, (data->human->y + 0.1) * game->viewport.height)) {
-	mov->dy = -20;
-	mov->dx = -5;
+if (data->human->x < -0.3) {
+	if (!mov->dead) {
+		SelectSpritesheet(game, data->human, "boom");
+		mov->dy = 0;
+		al_play_sample_instance(data->boom);
+		mov->dead = true;
+	}
 }
 
-if (IsOnCharacter(game, data->van, data->human->x * game->viewport.width, (data->human->y) * game->viewport.height)) {
+if ((data->human->y < 0.725) && (data->human->y > 0.675))  {
+
+if ((data->human->x + 0.2 < data->tramp->x + 0.3) && (data->human->x - 0.2 > data->tramp->x - 0.25)) {
+//if (IsOnCharacter(game, data->tramp, data->human->x * game->viewport.width, (data->human->y + 0.1) * game->viewport.height)) {
+ if(!mov->dead) {
+	mov->dy = -20;
+	if (mov->type==0) {
+//		mov->dx = -7;
+		mov->dx = (data->human->x - 0.23)* -24;
+
+	} else {
+		mov->dx = -20;
+	}
+	al_play_sample_instance(data->boing);
+ }
+}
+ else if (IsOnCharacter(game, data->van, data->human->x * game->viewport.width, (data->human->y) * game->viewport.height)) {
+ if (!mov->dead) {
 	SetCharacterPositionF(game, data->human, 0.8, 0.27, 0);
-	mov->dx = -8;
+	mov->dx = (rand() / (float)INT_MAX) * -12;
 	mov->dy = -10;
+	al_play_sample_instance(data->bdzium);
+	mov->type = rand() % 3;
+	SelectSpritesheet(game, data->human, TYPES[mov->type]);
+ }
+} else {
+	if (!mov->dead) {
+		SelectSpritesheet(game, data->human, "boom");
+		mov->dy = 0;
+		al_play_sample_instance(data->boom);
+		mov->dead = true;
+	}
+}
+}
+
+if (mov->dead) {
+	if (!data->human->successor) {
+		SetCharacterPositionF(game, data->human, 0.8, 0.27, 0);
+		mov->dx = (rand() / (float)INT_MAX) * -12;
+		mov->dy = -10;
+		mov->dead = false;
+		mov->type = rand() % 3;
+		SelectSpritesheet(game, data->human, TYPES[mov->type]);
+	}
 }
 
 }
@@ -125,15 +183,15 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 
 	DrawCharacterHelper(game, data->building, 1, 1, 0);
 
-	DrawCharacterHelper(game, data->human, 1, 1, 0);
 
 
 	SetCharacterPosition(game, data->tramp, GetCharacterX(game, data->ego) + 0.0666 * game->viewport.width,  0.725 * game->viewport.height, 0);
 
-	DrawCharacterHelper(game, data->van, 1, 1, 0);
 
 	DrawCharacterHelper(game, data->ego, 0.5, 0.5, 0);
 	DrawCharacterHelper(game, data->tramp, 0.3573, 0.3573, 0);
+	DrawCharacterHelper(game, data->human, 1, 1, 0);
+	DrawCharacterHelper(game, data->van, 1, 1, 0);
 
 }
 
@@ -182,12 +240,40 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	RegisterSpritesheet(game, data->human, "kid");
 	RegisterSpritesheet(game, data->human, "man");
 	RegisterSpritesheet(game, data->human, "woman");
+	RegisterSpritesheet(game, data->human, "boom");
+	RegisterSpritesheet(game, data->human, "blank");
 	LoadSpritesheets(game, data->human);
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 	data->building = CreateCharacter(game, "building");
 	RegisterSpritesheet(game, data->building, "fire");
 	LoadSpritesheets(game, data->building);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
+
+	data->sample = al_load_sample(GetDataFilePath(game, "music.flac"));
+	data->music = al_create_sample_instance(data->sample);
+	al_attach_sample_instance_to_mixer(data->music, game->audio.music);
+	al_set_sample_instance_playmode(data->music, ALLEGRO_PLAYMODE_LOOP);
+	al_set_sample_instance_gain(data->music, 0.85);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
+
+
+
+	data->bdziumsample = al_load_sample(GetDataFilePath(game, "bdzium.flac"));
+	data->bdzium = al_create_sample_instance(data->bdziumsample);
+	al_attach_sample_instance_to_mixer(data->bdzium, game->audio.fx);
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
+
+	data->boomsample = al_load_sample(GetDataFilePath(game, "boom.flac"));
+	data->boom = al_create_sample_instance(data->boomsample);
+	al_attach_sample_instance_to_mixer(data->boom, game->audio.fx);
+	al_set_sample_instance_gain(data->boom, 1.333);
+
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
+
+	data->boingsample = al_load_sample(GetDataFilePath(game, "boing.flac"));
+	data->boing = al_create_sample_instance(data->boingsample);
+	al_attach_sample_instance_to_mixer(data->boing, game->audio.fx);
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 
@@ -215,6 +301,8 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	struct Mov *mov = malloc(sizeof(struct Mov));
 	mov->dx = -8;
 	mov->dy = -10;
+	mov->dead = false;
+	mov->type = 0;
 	data->human->data = mov;
 
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
@@ -241,17 +329,19 @@ void Gamestate_Start(struct Game *game, struct GamestateResources* data) {
 	data->right = false;
 	SetCharacterPositionF(game, data->ego, 0.2875, 0.666, 0);
 	SelectSpritesheet(game, data->ego, "stand");
-	SelectSpritesheet(game, data->human, "man");
+	SelectSpritesheet(game, data->human, "kid");
 	SetCharacterPositionF(game, data->human, 0.8, 0.27, 0);
 	SelectSpritesheet(game, data->building, "fire");
 	SetCharacterPositionF(game, data->building, 0.76, 0.1, 0);
 	SelectSpritesheet(game, data->tramp, "tramp");
 	SelectSpritesheet(game, data->van, "van");
 	SetCharacterPositionF(game, data->van, 0, 0.6, 0);
+	al_play_sample_instance(data->music);
 }
 
 void Gamestate_Stop(struct Game *game, struct GamestateResources* data) {
 	// Called when gamestate gets stopped. Stop timers, music etc. here.
+	al_stop_sample_instance(data->music);
 }
 
 void Gamestate_Pause(struct Game *game, struct GamestateResources* data) {
