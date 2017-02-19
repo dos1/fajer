@@ -133,6 +133,7 @@ if (data->humans[i]->x < -0.3) {
 	if (!mov->dead) {
 		SelectSpritesheet(game, data->humans[i], "boom");
 		mov->dy = 0;
+		al_stop_sample_instance(data->boom);
 		al_play_sample_instance(data->boom);
 		mov->dead = true;
 	}
@@ -151,6 +152,7 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
 	} else {
 		mov->dx = -20;
 	}
+	al_stop_sample_instance(data->boing);
 	al_play_sample_instance(data->boing);
  }
 }
@@ -159,6 +161,7 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
 	SetCharacterPositionF(game, data->humans[i], 0.8, 0.27, 0);
 	mov->dx = (rand() / (float)INT_MAX) * -12;
 	mov->dy = -10;
+	al_stop_sample_instance(data->bdzium);
 	al_play_sample_instance(data->bdzium);
 	mov->type = rand() % 3;
 	data->score++;
@@ -171,6 +174,7 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
 	if (!mov->dead) {
 		SelectSpritesheet(game, data->humans[i], "boom");
 		mov->dy = 0;
+		al_stop_sample_instance(data->boom);
 		al_play_sample_instance(data->boom);
 		mov->dead = true;
 	}
@@ -247,7 +251,10 @@ void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, 
 	}
 bool movement = data->left || data->right;
   if (ev->type == ALLEGRO_EVENT_KEY_DOWN) {
-		if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT) {
+		if (ev->keyboard.keycode == ALLEGRO_KEY_BACKSPACE) {
+			SwitchCurrentGamestate(game, "lose");
+		}
+		  if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT) {
 			data->left = true;
 			if (!movement)
 				SelectSpritesheet(game, data->ego, "walk");
