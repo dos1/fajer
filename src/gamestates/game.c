@@ -156,7 +156,7 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
 	al_play_sample_instance(data->boing);
  }
 }
- else if (IsOnCharacter(game, data->van, data->humans[i]->x * game->viewport.width, (data->humans[i]->y) * game->viewport.height)) {
+ else if ((data->humans[i]->x <= 0.235) && (mov->type==0)) {
  if (!mov->dead) {
 	SetCharacterPositionF(game, data->humans[i], 0.8, 0.27, 0);
 	mov->dx = (rand() / (float)INT_MAX) * -12;
