@@ -174,7 +174,6 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
 	if (!mov->dead) {
 		SelectSpritesheet(game, data->humans[i], "boom");
 		mov->dy = 0;
-		al_stop_sample_instance(data->boom);
 		al_play_sample_instance(data->boom);
 		mov->dead = true;
 	}
