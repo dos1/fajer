@@ -33,7 +33,7 @@ struct GamestateResources {
 		ALLEGRO_SAMPLE_INSTANCE *broom;
 };
 
-int Gamestate_ProgressCount = 1; // number of loading steps as reported by Gamestate_Load
+int Gamestate_ProgressCount = 2; // number of loading steps as reported by Gamestate_Load
 
 void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	// Called 60 times per second. Here you should do all your game logic.
@@ -66,8 +66,8 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	data->sample = al_load_sample(GetDataFilePath(game, "lose.flac"));
 	data->broom = al_create_sample_instance(data->sample);
 	al_attach_sample_instance_to_mixer(data->broom, game->audio.fx);
-
-	data->bg = al_load_bitmap(GetDataFilePath(game, "lose.png"));
+progress(game);
+  data->bg = al_load_bitmap(GetDataFilePath(game, "lose.png"));
 
 	return data;
 }
@@ -76,6 +76,10 @@ void Gamestate_Unload(struct Game *game, struct GamestateResources* data) {
 	// Called when the gamestate library is being unloaded.
 	// Good place for freeing all allocated memory and resources.
 	al_destroy_font(data->font);
+	UnloadGamestate(game, "game");
+	al_destroy_sample_instance(data->broom);
+	al_destroy_sample(data->sample);
+	al_destroy_bitmap(data->bg);
 	free(data);
 }
 

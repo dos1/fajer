@@ -23,6 +23,7 @@
 #include <libsuperderpy.h>
 #include <allegro5/allegro_color.h>
 #include <math.h>
+#include <stdio.h>
 
 #define HUMANS 3
 
@@ -71,7 +72,7 @@ struct GamestateResources {
 float POINTS[3] = {0.4375, 0.5625, 0.71875};
 char* TYPES[3] = {"kid", "woman", "man"};
 
-int Gamestate_ProgressCount = 9; // number of loading steps as reported by Gamestate_Load
+int Gamestate_ProgressCount = 8+HUMANS; // number of loading steps as reported by Gamestate_Load
 
 void SetTarget(struct Game *game, struct Character *character, int point, float ypos) {
 	float target = POINTS[point];
@@ -99,7 +100,9 @@ void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 data->ticks++;
 
 if (data->progress > 60*60) {
-	SwitchCurrentGamestate(game, "lose");
+	StopCurrentGamestate(game);
+	LoadGamestate(game, "lose");
+	StartGamestate(game, "lose");
 }
 
 
@@ -166,7 +169,9 @@ if ((data->humans[i]->x + 0.2 < data->tramp->x + 0.3) && (data->humans[i]->x - 0
 	mov->type = rand() % 3;
 	data->score++;
 	if (data->score > 10) {
-		SwitchCurrentGamestate(game, "exit");
+		StopCurrentGamestate(game);
+		LoadGamestate(game, "exit");
+		StartGamestate(game, "exit");
 	}
 	SelectSpritesheet(game, data->humans[i], TYPES[mov->type]);
  }
@@ -250,7 +255,7 @@ void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, 
 	}
 bool movement = data->left || data->right;
   if (ev->type == ALLEGRO_EVENT_KEY_DOWN) {
-		if (ev->keyboard.keycode == ALLEGRO_KEY_BACKSPACE) {
+		if (game->config.debug && ev->keyboard.keycode == ALLEGRO_KEY_BACKSPACE) {
 			SwitchCurrentGamestate(game, "lose");
 		}
 		  if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT) {
@@ -294,8 +299,8 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	RegisterSpritesheet(game, data->humans[i], "boom");
 	RegisterSpritesheet(game, data->humans[i], "blank");
 	LoadSpritesheets(game, data->humans[i]);
-	}
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
+	}
 
 	data->building = CreateCharacter(game, "building");
 	RegisterSpritesheet(game, data->building, "fire");
@@ -356,7 +361,6 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	mov->type = 0;
 	data->humans[i]->data = mov;
 }
-	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	return data;
 }
 
@@ -365,7 +369,24 @@ void Gamestate_Unload(struct Game *game, struct GamestateResources* data) {
 	// Good place for freeing all allocated memory and resources.
 	al_destroy_font(data->font);
 	al_destroy_bitmap(data->bg);
+	al_destroy_bitmap(data->clouds);
 	DestroyCharacter(game, data->building);
+	DestroyCharacter(game, data->ego);
+	DestroyCharacter(game, data->tramp);
+	DestroyCharacter(game, data->van);
+	for (int i=0; i<HUMANS; i++) {
+		free(data->humans[i]->data);
+		DestroyCharacter(game, data->humans[i]);
+	}
+	al_destroy_sample(data->sample);
+	al_destroy_sample_instance(data->music);
+	al_destroy_sample(data->boomsample);
+	al_destroy_sample_instance(data->boom);
+	al_destroy_sample(data->bdziumsample);
+	al_destroy_sample_instance(data->bdzium);
+	al_destroy_sample(data->boingsample);
+	al_destroy_sample_instance(data->boing);
+
 //	DestroyCharacter(game, data->human);
 	free(data);
 }

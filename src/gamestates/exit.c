@@ -36,7 +36,7 @@ struct GamestateResources {
 		float pos;
 };
 
-int Gamestate_ProgressCount = 1; // number of loading steps as reported by Gamestate_Load
+int Gamestate_ProgressCount = 5; // number of loading steps as reported by Gamestate_Load
 
 void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	// Called 60 times per second. Here you should do all your game logic.
@@ -100,15 +100,17 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 	data->bg= al_load_bitmap(GetDataFilePath(game, "exitbg.png"));
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	data->exit1= al_load_bitmap(GetDataFilePath(game, "exit1.png"));
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	data->exit2= al_load_bitmap(GetDataFilePath(game, "exit2.png"));
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	data->exit3= al_load_bitmap(GetDataFilePath(game, "exit3.png"));
+	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 
 	data->sample = al_load_sample(GetDataFilePath(game, "brum.flac"));
 	data->broom = al_create_sample_instance(data->sample);
 	al_attach_sample_instance_to_mixer(data->broom, game->audio.fx);
-	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
-
 
 	return data;
 }
@@ -117,6 +119,12 @@ void Gamestate_Unload(struct Game *game, struct GamestateResources* data) {
 	// Called when the gamestate library is being unloaded.
 	// Good place for freeing all allocated memory and resources.
 	al_destroy_font(data->font);
+	al_destroy_sample_instance(data->broom);
+	al_destroy_sample(data->sample);
+	al_destroy_bitmap(data->bg);
+	al_destroy_bitmap(data->exit1);
+	al_destroy_bitmap(data->exit2);
+	al_destroy_bitmap(data->exit3);
 	free(data);
 }
 
