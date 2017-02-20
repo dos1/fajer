@@ -228,9 +228,9 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 
 
 	al_draw_filled_rounded_rectangle(game->viewport.width * 0.2, game->viewport.height * 0.01, game->viewport.width * 0.8, game->viewport.height * 0.07, game->viewport.width / 320, game->viewport.height / 180, al_map_rgb(0,0,0));
-	al_draw_filled_rectangle(game->viewport.width * 0.21, game->viewport.height * 0.02,
-	                         game->viewport.width * 0.21 + (game->viewport.width * 0.58) * (data->progress / (60.0*60.0)),
-	                         game->viewport.height * 0.06, al_map_rgb(255,0,0));
+	al_draw_filled_rectangle(game->viewport.width * 0.205, game->viewport.height * 0.02,
+	                         game->viewport.width * 0.205 + (game->viewport.width * 0.59) * (data->progress / (60.0*60.0)),
+	                         game->viewport.height * 0.06, al_map_rgb(214,55,55));
 
 
 	char buf[255];
